@@ -13,29 +13,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install sshpass
-        run: sudo apt-get install -y sshpass 
-
       - name: Install Docker and Docker Compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker docker-compose
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER }} >> ~/.ssh/known_hosts
-
       - name: Copy files 
         run: |
-          set -x
-          sshpass -p "${{ secrets.PASSWORD_SERVER }}" rsync -avz --delete --rsh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./ ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose
+          # Crea un archivo temporal para la clave privada
+          echo "${{ secrets.PEM_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          
+          # Usa rsync con la clave privada para copiar archivos
+          rsync -avz --delete -e "ssh -i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./ ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose
 
       - name: SSH commands to deploy
         run: |
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
+          # Conéctate al servidor y ejecuta comandos
+          ssh -i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
           cd /home/ubuntu/donjose
           docker compose down
           docker compose up -d --build
