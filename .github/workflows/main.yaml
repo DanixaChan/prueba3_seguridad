@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: install sshpass
+      - name: Install sshpass
         run: sudo apt-get install -y sshpass 
 
       - name: Install Docker and Docker Compose
@@ -20,13 +21,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker docker-compose
 
-      - name: copiar archivos 
+      - name: Setup SSH
         run: |
-          sshpass -p "${{ secrets.PASSWORD_SERVER }}" rsync -avz --delete --rsh="sshpass -p '${{ secrets.PASSWORD_SERVER }}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./ ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER }} >> ~/.ssh/known_hosts
+
+      - name: Copy files 
+        run: |
+          set -x
+          sshpass -p "${{ secrets.PASSWORD_SERVER }}" rsync -avz --delete --rsh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./ ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose
 
       - name: SSH commands to deploy
         run: |
-          sshpass -p "${{ secrets.PASSWORD_SERVER }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
           cd /home/ubuntu/donjose
           docker compose down
           docker compose up -d --build
