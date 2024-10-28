@@ -1,0 +1,33 @@
+name: EjercicioSeguridad_p3
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: install sshpass
+        run: sudo apt-get install -y sshpass 
+
+      - name: Install Docker and Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker docker-compose
+
+      - name: copiar archivos 
+        run: |
+          sshpass -p "${{ secrets.PASSWORD_SERVER }}" rsync -avz --delete --rsh="sshpass -p '${{ secrets.PASSWORD_SERVER }}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./ ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }}:/home/ubuntu/donjose
+
+      - name: SSH commands to deploy
+        run: |
+          sshpass -p "${{ secrets.PASSWORD_SERVER }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
+          cd /home/ubuntu/donjose
+          docker compose down
+          docker compose up -d --build
+          EOF
