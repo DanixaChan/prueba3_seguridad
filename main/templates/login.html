@@ -86,7 +86,7 @@
             <p>La tienda de tu barrio, alegre y confiable.</p>
             <form action="{% url 'login_vulnerable' %}" method="POST">
                 {% csrf_token %}
-                <!--Token: YWRtaW5fdXNlcjpKb3NlR29tZXomcGFzc3dvcmQ6ZG9uam9zZWdvbWV6MjAyNA==  -->
+               
                 <label for="username">Usuario:</label>
                 <input type="text" id="username" name="username" required>
                 <label for="password">Contraseña:</label>
