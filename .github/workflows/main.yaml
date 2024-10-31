@@ -3,7 +3,7 @@ name: EjercicioSeguridad_p3V3
 on: 
   push:
     branches:
-      - main
+      - TuRamaDespligue #cambia esto a la rama que quieras que escuche para desplegar 
 
 jobs:
   deploy:
@@ -31,12 +31,7 @@ jobs:
       - name: SSH commands to deploy
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.SERVER }} << 'EOF'
-          mkdir /opt/password
-          touch /opt/password/secretos
-          echo "RXN0YSBlcyBhIGNvbnRyYXNl8WEgZGUgZG9uSm9zZTogW0ZMQUdbU2VjcmV0b01heGltb2RlRG9uSm9zZV09PV0="> /opt/password/secretos
           cd /home/ubuntu/donjose/
-          touch pista
-          echo "5ZyoIC9vcHQvcGFzc3dvcmQvc2VjcmV0cyDot6/lvoTkuK3mgqjlj6/ku6Xmib7liLDmnInotqPnmoTlhYPntKA=">pista
           docker compose down
           docker compose up -d --build
           EOF
